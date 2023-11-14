@@ -1,27 +1,26 @@
 <?php
+session_start();
+include("../db/conexion.php"); // Archivo donde realizo la configuración de la base de datos
 
-include '../db/conexion.php';
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    $username = mysqli_real_escape_string($conexion, $_POST['username']);
+    $password = mysqli_real_escape_string($conexion, $_POST['password']);
 
-if (isset($_POST['login_btn'])) {
-    $id = $_POST['id_person'];
-    $pass = $_POST['pass'];
-    $pass_code = base64_encode($pass);
+    $query = "SELECT id, password FROM usuarios WHERE username = '$username'";
+    $result = mysqli_query($conexion, $query);
 
-    $consulta = mysqli_query($conexion, "SELECT * FROM users 
-                            where id_person = '$id' and pass = '$pass_code'");
-    $exist = mysqli_num_rows($consulta);
-
-    if ($exist == 1) {
-        session_start();
-        while ($datos = mysqli_fetch_array($consulta)) {
-            $_SESSION['nombre'] = $datos['names'];
-            $_SESSION['apellido'] = $datos['lastname'];
-            $_SESSION['nacimiento'] = $datos['birth'];
-            $_SESSION['usuario'] = $datos['id_person'];
-            $_SESSION['email'] = $datos['email'];
+    if ($row = mysqli_fetch_assoc($result)) {
+        if (password_verify($password, $row['password'])) {
+            $_SESSION['user_id'] = $row['id'];
+            header("location: dashboard.php"); //Inicio de sesión exitoso
+        } else {
+            echo "Contraseña incorrecta";
         }
-    }else {
+    } else {
+        echo "Usuario no encontrado";
     }
-}
 
+    mysqli_close($conexion);
+}
 ?>
+
